@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Simulateur Logement</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:#f2f4f8; --surface:#fff; --surface2:#e8ecf5;
+  --blue:#1e40af; --blue-light:#dbeafe;
+  --green:#15803d; --green-light:#dcfce7;
+  --red:#b91c1c; --red-light:#fee2e2;
+  --orange:#c2410c; --orange-light:#ffedd5;
+  --amber:#92400e; --amber-light:#fef3c7;
+  --text:#111827; --muted:#6b7280; --border:#e5e7eb;
+  --radius:14px;
+  --shadow:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:15px;min-height:100dvh;padding-bottom:2rem}
+
+/* HEADER */
+.header{background:var(--blue);color:#fff;padding:1.1rem 1.2rem .9rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(30,64,175,.3)}
+.header-top{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.header h1{font-size:1rem;font-weight:600;letter-spacing:-.01em}
+.header p{font-size:.72rem;opacity:.7;margin-top:.1rem}
+.header-right{display:flex;gap:.4rem;align-items:center;flex-shrink:0}
+
+/* MODE TOGGLE */
+.mode-toggle{display:flex;background:rgba(255,255,255,.15);border-radius:8px;padding:3px;gap:2px}
+.mode-btn{border:none;background:transparent;color:rgba(255,255,255,.7);font-family:inherit;font-size:.73rem;font-weight:500;padding:.3rem .65rem;border-radius:6px;cursor:pointer;transition:all .15s}
+.mode-btn.active{background:#fff;color:var(--blue)}
+
+/* PDF BTN */
+.pdf-btn{border:none;background:rgba(255,255,255,.2);color:#fff;font-family:inherit;font-size:.73rem;font-weight:600;padding:.35rem .8rem;border-radius:8px;cursor:pointer;white-space:nowrap;transition:background .15s}
+.pdf-btn:hover{background:rgba(255,255,255,.35)}
+
+/* SECTIONS */
+.section{background:var(--surface);border-radius:var(--radius);margin:.7rem 1rem;box-shadow:var(--shadow);overflow:hidden}
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem;cursor:pointer;user-select:none;border-bottom:1px solid transparent;transition:border-color .15s}
+.section-head.open{border-bottom-color:var(--border)}
+.section-title{display:flex;align-items:center;gap:.5rem;font-weight:600;font-size:.92rem}
+.section-icon{font-size:1rem}
+.section-badge{font-family:'DM Mono',monospace;font-size:.76rem;font-weight:500;background:var(--blue-light);color:var(--blue);padding:.1rem .5rem;border-radius:6px}
+.section-badge.red{background:var(--red-light);color:var(--red)}
+.section-badge.green{background:var(--green-light);color:var(--green)}
+.section-badge.orange{background:var(--orange-light);color:var(--orange)}
+.chevron{font-size:.8rem;color:var(--muted);transition:transform .2s}
+.chevron.open{transform:rotate(180deg)}
+.section-body{display:none;padding:.5rem 1.1rem 1rem}
+.section-body.open{display:block}
+
+/* FIELDS */
+.field{margin-bottom:.85rem}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:.75rem;font-weight:500;color:var(--muted);margin-bottom:.3rem}
+.field-row{display:flex;align-items:center;gap:.5rem}
+.field input[type="number"],.field input[type="text"],.field input[type="date"],.field select,.field textarea{
+  width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;
+  padding:.6rem .8rem;font-family:'DM Mono',monospace;font-size:.92rem;font-weight:500;
+  color:var(--text);-webkit-appearance:none;appearance:none;transition:border-color .15s,box-shadow .15s}
+.field textarea{font-family:'DM Sans',system-ui,sans-serif;font-size:.85rem;resize:vertical;min-height:56px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,64,175,.12)}
+.field .unit{font-size:.8rem;color:var(--muted);white-space:nowrap;min-width:28px}
+
+/* FIELD ROW 2-col */
+.field-2{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.85rem}
+.field-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem}
+
+/* CHECKBOXES */
+.check-group{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.85rem}
+.check-label{font-size:.74rem;font-weight:500;color:var(--muted);display:block;margin-bottom:.3rem}
+
+/* Segmented single-select toggle rows (chauffage / eau chaude) */
+.seg-title{font-size:.83rem;font-weight:600;color:var(--text);margin:.9rem 0 .5rem;padding-top:.6rem;border-top:1px solid var(--border)}
+.seg-title:first-child{margin-top:0;padding-top:0;border-top:none}
+.seg-sublabel{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem}
+.segment{display:flex;gap:.5rem;margin-bottom:.75rem}
+.seg-btn{flex:1;text-align:center;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:.55rem .4rem;font-size:.83rem;font-weight:500;color:var(--muted);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:all .15s}
+.seg-btn.active{background:var(--blue-light);border-color:var(--blue);color:var(--blue);font-weight:700}
+.check-pill{display:inline-flex;align-items:center;gap:.3rem;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:.35rem .65rem;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;user-select:none;transition:all .15s;-webkit-user-select:none;touch-action:manipulation}
+.check-pill.checked{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+
+/* DPE */
+.dpe-group{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.85rem}
+.dpe-btn{width:36px;height:36px;border:2px solid transparent;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit}
+.dpe-btn.active{border-color:#333;transform:scale(1.1)}
+.dpe-A{background:#009a44;color:#fff}
+.dpe-B{background:#51b848;color:#fff}
+.dpe-C{background:#b5d334;color:#222}
+.dpe-D{background:#fff200;color:#222}
+.dpe-E{background:#f7a600;color:#222}
+.dpe-F{background:#ee7203;color:#fff}
+.dpe-G{background:#dd1d21;color:#fff}
+
+/* SLIDER */
+.slider-wrap{margin-bottom:.85rem}
+.slider-wrap label{display:flex;justify-content:space-between;align-items:baseline;font-size:.75rem;font-weight:500;color:var(--muted);margin-bottom:.5rem}
+.slider-wrap label span{font-family:'DM Mono',monospace;font-size:.9rem;color:var(--text);font-weight:600}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:3px;background:var(--surface2);outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--blue);cursor:pointer;box-shadow:0 2px 8px rgba(30,64,175,.35)}
+
+/* GAUGE */
+.gauge-wrap{margin:.35rem 0 .85rem}
+.gauge-track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.gauge-fill{height:100%;border-radius:4px;transition:width .3s,background .3s}
+.gauge-labels{display:flex;justify-content:space-between;font-size:.71rem;color:var(--muted);margin-top:.3rem}
+
+/* TAUX CHIPS */
+.taux-ref{display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.65rem}
+.taux-chip{background:var(--surface2);border-radius:6px;padding:.22rem .5rem;font-size:.72rem;color:var(--muted);cursor:pointer;border:1.5px solid transparent;transition:all .15s}
+.taux-chip:hover,.taux-chip.picked{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+
+/* INFO CHIP */
+.info-chip{background:var(--blue-light);color:var(--blue);border-radius:8px;padding:.45rem .75rem;font-size:.77rem;line-height:1.5;margin-top:.5rem}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:.4rem 0}
+
+/* MINI TABLE */
+.mini-table{width:100%;border-collapse:collapse;font-size:.83rem;margin-top:.4rem}
+.mini-table tr:not(:last-child) td{border-bottom:1px solid var(--border)}
+.mini-table td{padding:.42rem .1rem;vertical-align:top}
+.mini-table td:last-child{text-align:right;font-family:'DM Mono',monospace;font-weight:500;white-space:nowrap}
+.mini-table .total td{font-weight:700;padding-top:.55rem;border-top:2px solid var(--border)}
+.mini-table .red td:last-child{color:var(--red)}
+.mini-table .green td:last-child{color:var(--green)}
+.mini-table .blue td:last-child{color:var(--blue)}
+.amount-neg{color:var(--red);font-weight:700}
+.amount-pos{color:var(--green);font-weight:700}
+
+/* CONCLUSION BANNER */
+.conclusion{margin:1rem;border-radius:var(--radius);padding:1.1rem 1.2rem;box-shadow:var(--shadow);transition:background .2s,border-color .2s}
+.conclusion.ok  {background:var(--green-light);border:1.5px solid #86efac}
+.conclusion.warn{background:var(--amber-light);border:1.5px solid #fcd34d}
+.conclusion.bad {background:var(--red-light);border:1.5px solid #fca5a5}
+.conclusion-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.65;margin-bottom:.2rem}
+.conclusion-main{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+.conclusion-num{font-family:'DM Mono',monospace;font-size:2rem;font-weight:500;line-height:1}
+.conclusion-sub{font-size:.8rem;opacity:.7}
+.conclusion-rows{margin-top:.55rem;font-size:.81rem;opacity:.85;display:flex;flex-direction:column;gap:.18rem}
+.conclusion-rows span{display:flex;justify-content:space-between}
+.conclusion-rows b{font-family:'DM Mono',monospace}
+
+/* ===== PRINT / PDF ===== */
+@media print {
+  @page{size:A4;margin:12mm 14mm}
+  body{background:#fff!important;font-size:11px;padding:0}
+  .header{position:static!important;background:#1e40af!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:.8rem 1rem}
+  .pdf-btn,.mode-toggle{display:none!important}
+  .section{margin:.4rem 0!important;box-shadow:none!important;border:1px solid #e5e7eb;break-inside:avoid}
+  .section-body{display:block!important}
+  .section-head{padding:.55rem .8rem}
+  .section-body{padding:.3rem .8rem .6rem}
+  .conclusion{margin:.5rem 0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  input,select,textarea{border:1px solid #ccc!important;background:#f9f9f9!important;padding:.3rem .5rem!important;font-size:.85rem!important}
+  .check-pill{border:1px solid #ccc!important;font-size:.74rem!important;padding:.2rem .45rem!important;background:#f9f9f9!important}
+  .check-pill.checked{background:#dbeafe!important;border-color:#1e40af!important;color:#1e40af!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .dpe-btn{width:28px!important;height:28px!important;font-size:.72rem!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .gauge-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  input[type="range"]{display:none}
+  .slider-print{display:block!important}
+  canvas{display:none}
+  .info-chip{background:#dbeafe!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:.72rem}
+  .taux-ref{display:none}
+  .field-2,.field-3{grid-template-columns:1fr 1fr}
+}
+.slider-print{display:none;font-family:'DM Mono',monospace;font-size:.85rem;font-weight:600;color:var(--text);margin-top:.3rem}
+/* ═══════════ IMPRESSION / PDF via window.print() ═══════════ */
+@media print {
+  @page { size: A4; margin: 12mm 14mm; }
+  body { background:#fff !important; font-size: 11px; }
+  .header { position:static !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .pdf-btn, .mode-toggle { display:none !important; }
+  .section { margin:.4rem 0 !important; box-shadow:none !important; border:1px solid var(--border); break-inside:avoid; }
+  .section-body { display:block !important; }
+  input, select, textarea { border:1px solid #ccc !important; background:#f9f9f9 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .check-pill.checked, .seg-btn.active { background:var(--blue-light) !important; border-color:var(--blue) !important; color:var(--blue) !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .dpe-btn { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  input[type="range"] { display:none; }
+  .conclusion { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>🏠 Simulateur Logement</h1>
+      <p>Mise à jour en temps réel · Fiche bien visité</p>
+    </div>
+    <div class="header-right">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btnAchat" >Achat</button>
+        <button class="mode-btn"        id="btnLoc"   >Location</button>
+      </div>
+      <button class="pdf-btn" id="btnPDF">⬇ PDF</button>
+      <button class="pdf-btn" id="btnPrint">🖨️</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SECTION 0 : BIEN VISITÉ ====== -->
+<div class="section">
+  <div class="section-head open" >
+    <div class="section-title"><span class="section-icon">📍</span> Bien visité</div>
+    <span class="chevron open">▾</span>
+  </div>
+  <div class="section-body open">
+
+    <div class="field-2">
+      <div class="field">
+        <label>Date de visite</label>
+        <input type="date" id="dateVisite">
+      </div>
+      <div class="field">
+        <label>Ville</label>
+        <input type="text" id="ville" placeholder="ex. Créteil">
+      </div>
+    </div>
+
+    <div class="field-3">
+      <div class="field">
+        <label>Quartier</label>
+        <input type="text" id="quartier" placeholder="ex. Les Planètes">
+      </div>
+      <div class="field">
+        <label>Étage</label>
+        <input type="text" id="etage" placeholder="ex. 3">
+      </div>
+      <div class="field">
+        <label>Nb pièces</label>
+        <input type="number" id="nbPieces" placeholder="ex. 3" min="1" max="10">
+      </div>
+    </div>
+
+    <div class="field-2">
+      <div class="field">
+        <label>Métrage (m²)</label>
+        <input type="number" id="metrage" placeholder="ex. 63">
+      </div>
+      <div class="field">
+        <label>Nb lots copro</label>
+        <input type="number" id="nbLots" placeholder="ex. 48">
+      </div>
+    </div>
+
+    <!-- Équipements -->
+    <div class="check-label">Équipements & Extras</div>
+    <div class="check-group" id="equipGroup">
+      <div class="check-pill"  data-val="Parking">🚗 Parking</div>
+      <div class="check-pill"  data-val="Box">📦 Box</div>
+      <div class="check-pill"  data-val="Cave">🗄 Cave</div>
+      <div class="check-pill"  data-val="Balcon">🌿 Balcon</div>
+      <div class="check-pill"  data-val="Terrasse">☀️ Terrasse</div>
+      <div class="check-pill"  data-val="Gardien">👤 Gardien</div>
+      <div class="check-pill"  data-val="Digicode">🔐 Digicode</div>
+      <div class="check-pill"  data-val="Ascenseur">🛗 Ascenseur</div>
+    </div>
+
+    <div class="field">
+      <label>Remarques libres</label>
+      <textarea id="remarques" placeholder="Impression générale, luminosité, état, voisinage…"></textarea>
+    </div>
+
+    <!-- Chauffage -->
+    <div class="seg-title">🌡️ Chauffage</div>
+    <div class="seg-sublabel">Mode</div>
+    <div class="segment" id="chauffModeGroup">
+      <div class="seg-btn" data-group="chauffMode" data-val="Individuel">👤 Individuel</div>
+      <div class="seg-btn" data-group="chauffMode" data-val="Collectif">🏢 Collectif</div>
+    </div>
+    <div class="seg-sublabel">Énergie</div>
+    <div class="segment" id="chauffEnergieGroup">
+      <div class="seg-btn" data-group="chauffEnergie" data-val="Gaz">🔥 Gaz</div>
+      <div class="seg-btn" data-group="chauffEnergie" data-val="Électrique">⚡ Électrique</div>
+    </div>
+
+    <!-- Eau chaude -->
+    <div class="seg-title">🚿 Eau chaude</div>
+    <div class="seg-sublabel">Mode</div>
+    <div class="segment" id="eauModeGroup">
+      <div class="seg-btn" data-group="eauMode" data-val="Individuel">👤 Individuel</div>
+      <div class="seg-btn" data-group="eauMode" data-val="Collectif">🏢 Collectif</div>
+    </div>
+    <div class="seg-sublabel">Énergie</div>
+    <div class="segment" id="eauEnergieGroup">
+      <div class="seg-btn" data-group="eauEnergie" data-val="Gaz">🔥 Gaz</div>
+      <div class="seg-btn" data-group="eauEnergie" data-val="Électrique">⚡ Électrique</div>
+    </div>
+
+    <div class="info-chip" id="energieEstimation">
+      Sélectionnez chauffage, eau chaude et DPE pour estimer la consommation énergie.
+    </div>
+
+    <!-- DPE -->
+    <div class="check-label">DPE — Diagnostic de performance énergétique</div>
+    <div class="dpe-group" id="dpeGroup">
+      <button class="dpe-btn dpe-A" data-dpe="A">A</button>
+      <button class="dpe-btn dpe-B" data-dpe="B">B</button>
+      <button class="dpe-btn dpe-C" data-dpe="C">C</button>
+      <button class="dpe-btn dpe-D" data-dpe="D">D</button>
+      <button class="dpe-btn dpe-E" data-dpe="E">E</button>
+      <button class="dpe-btn dpe-F" data-dpe="F">F</button>
+      <button class="dpe-btn dpe-G" data-dpe="G">G</button>
+    </div>
+
+    <!-- Prix, charges, impôts fonciers intégrés ici aussi pour le bien -->
+    <div class="field-2">
+      <div class="field">
+        <label>Prix affiché (€)</label>
+        <input type="number" id="prixBienVisite" placeholder="ex. 285000" oninput="syncPrix()">
+      </div>
+      <div class="field">
+        <label>Charges copro (€/mois)</label>
+        <input type="number" id="chargesVisite" placeholder="ex. 150" oninput="syncCharges()">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Taxe foncière estimée (€/an)</label>
+      <input type="number" id="tfVisite" placeholder="ex. 1200" oninput="syncTF()">
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== SECTION 1 : REVENUS ====== -->
+<div class="section">
+  <div class="section-head open" >
+    <div class="section-title"><span class="section-icon">💰</span> Revenus</div>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span class="section-badge green" id="badgeRev">—</span>
+      <span class="chevron open">▾</span>
+    </div>
+  </div>
+  <div class="section-body open">
+    <div class="field">
+      <label>Retraite CNAV + DRFIP + AG2R (net)</label>
+      <div class="field-row">
+        <input type="number" id="revRetraite" value="1721" >
+        <span class="unit">€/mois</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Aide famille</label>
+      <div class="field-row">
+        <input type="number" id="revFamille" value="0" >
+        <span class="unit">€/mois</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Aide compagnon</label>
+      <div class="field-row">
+        <input type="number" id="revCompagnon" value="200" >
+        <span class="unit">€/mois</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Autre revenu</label>
+      <div class="field-row">
+        <input type="number" id="revAutre" value="0" >
+        <span class="unit">€/mois</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SECTION 2 : ACHAT ====== -->
+<div class="section" id="sectionAchat">
+  <div class="section-head" >
+    <div class="section-title"><span class="section-icon">🏡</span> Paramètres Achat</div>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span class="section-badge" id="badgeAchat">—</span>
+      <span class="chevron">▾</span>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="field">
+      <label>Prix du bien</label>
+      <div class="field-row">
+        <input type="number" id="prixBien" value="285000" >
+        <span class="unit">€</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Apport personnel</label>
+      <div class="field-row">
+        <input type="number" id="apport" value="80000" >
+        <span class="unit">€</span>
+      </div>
+    </div>
+    <div class="gauge-wrap">
+      <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
+      <div class="gauge-labels"><span id="gaugeLeft">Capital emprunté : —</span><span id="gaugeRight">Apport : — %</span></div>
+    </div>
+
+    <div class="field">
+      <label>Frais de notaire (estimés)</label>
+      <div class="field-row">
+        <input type="number" id="fraisNotaire" value="20000" >
+        <span class="unit">€</span>
+      </div>
+    </div>
+
+    <div class="slider-wrap">
+      <label>Durée du prêt <span id="dureeVal">20 ans</span></label>
+      <input type="range" id="duree" min="10" max="25" step="5" value="20" >
+      <div class="slider-print" id="dureePrint"></div>
+      <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-top:.25rem">
+        <span>10 ans</span><span>15 ans</span><span>20 ans</span><span>25 ans</span>
+      </div>
+    </div>
+
+    <div class="slider-wrap">
+      <label>Taux d'intérêt <span id="tauxVal">3,5 %</span></label>
+      <div class="taux-ref">
+        <span class="taux-chip" >3,2 % · 10 ans</span>
+        <span class="taux-chip" >3,5 % · 15–20 ans</span>
+        <span class="taux-chip" >3,8 % · 25 ans</span>
+      </div>
+      <input type="range" id="taux" min="2.0" max="5.5" step="0.1" value="3.5" >
+      <div class="slider-print" id="tauxPrint"></div>
+      <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-top:.25rem">
+        <span>2 %</span><span>3 %</span><span>4 %</span><span>5 %</span><span>5,5 %</span>
+      </div>
+    </div>
+
+    <div class="slider-wrap">
+      <label>Taux assurance emprunteur <span id="assurVal">0,35 %</span></label>
+      <input type="range" id="assurTaux" min="0.1" max="0.8" step="0.05" value="0.35" >
+      <div class="slider-print" id="assurPrint"></div>
+      <div class="info-chip">Pour une retraitée : 0,30–0,50 % du capital emprunté/an. Peut être refusée ou majorée au-delà de 70 ans.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== SECTION 3 : LOCATION ====== -->
+<div class="section" id="sectionLoc" style="display:none">
+  <div class="section-head" >
+    <div class="section-title"><span class="section-icon">🔑</span> Paramètres Location</div>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span class="section-badge" id="badgeLoc">—</span>
+      <span class="chevron">▾</span>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <label>Loyer mensuel (hors charges)</label>
+      <div class="field-row">
+        <input type="number" id="loyer" value="900" >
+        <span class="unit">€/mois</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Provision sur charges locatives</label>
+      <div class="field-row">
+        <input type="number" id="chargesLoc" value="150" >
+        <span class="unit">€/mois</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Assurance habitation locataire</label>
+      <div class="field-row">
+        <input type="number" id="assurLoc" value="20" >
+        <span class="unit">€/mois</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SECTION 4 : COPRO & IMPÔTS ====== -->
+<div class="section" id="sectionCopro">
+  <div class="section-head" >
+    <div class="section-title"><span class="section-icon">🏢</span> Copropriété & Impôts</div>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span class="section-badge orange" id="badgeCopro">—</span>
+      <span class="chevron">▾</span>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <label>Charges de copropriété</label>
+      <div class="field-row">
+        <input type="number" id="chargesCopro" value="150" >
+        <span class="unit">€/mois</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Taxe foncière annuelle</label>
+      <div class="field-row">
+        <input type="number" id="taxeFonciere" value="1200" >
+        <span class="unit">€/an</span>
+      </div>
+      <div class="info-chip" style="margin-top:.5rem">Soit <b id="tfMensuel">—</b> €/mois. Due par le propriétaire même en cas de mise en location.</div>
+    </div>
+    <div class="field" id="fieldAssurHabAchat">
+      <label>Assurance habitation propriétaire</label>
+      <div class="field-row">
+        <input type="number" id="assurHab" value="30" >
+        <span class="unit">€/mois</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SECTION 5 : CHARGES VIE COURANTE ====== -->
+<div class="section">
+  <div class="section-head" >
+    <div class="section-title"><span class="section-icon">📋</span> Charges vie courante</div>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span class="section-badge red" id="badgeVie">—</span>
+      <span class="chevron">▾</span>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="field"><label>Mutuelle santé</label>
+      <div class="field-row"><input type="number" id="mutuelle" value="176" ><span class="unit">€/mois</span></div></div>
+    <div class="field"><label>Électricité / Gaz / Eau</label>
+      <div class="field-row"><input type="number" id="energies" value="120" ><span class="unit">€/mois</span></div></div>
+    <div class="field"><label>Téléphone mobile</label>
+      <div class="field-row"><input type="number" id="mobile" value="16" ><span class="unit">€/mois</span></div></div>
+    <div class="field"><label>Internet / fibre</label>
+      <div class="field-row"><input type="number" id="internet" value="31" ><span class="unit">€/mois</span></div></div>
+    <div class="field"><label>Assurance voiture</label>
+      <div class="field-row"><input type="number" id="assurVoiture" value="60" ><span class="unit">€/mois</span></div></div>
+    <div class="field"><label>Autres charges fixes</label>
+      <div class="field-row"><input type="number" id="autresCharges" value="0" ><span class="unit">€/mois</span></div></div>
+  </div>
+</div>
+
+<!-- ====== SECTION 6 : SYNTHÈSE ====== -->
+<div class="section">
+  <div class="section-head open" >
+    <div class="section-title"><span class="section-icon">📊</span> Synthèse détaillée</div>
+    <span class="chevron open">▾</span>
+  </div>
+  <div class="section-body open" id="syntheseBody"></div>
+</div>
+
+<!-- ====== SECTION 7 : COMPARAISON ====== -->
+<div class="section">
+  <div class="section-head" >
+    <div class="section-title"><span class="section-icon">⚖️</span> Comparaison Achat vs Location</div>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="section-body" id="compareBody"></div>
+</div>
+
+<!-- ====== CONCLUSION / RESTE À VIVRE ====== -->
+<div class="conclusion ok" id="conclusion">
+  <div class="conclusion-label">✅ Conclusion — Reste à vivre après toutes charges</div>
+  <div class="conclusion-main">
+    <div class="conclusion-num" id="concluNum">—</div>
+    <div class="conclusion-sub" id="concluSub">/mois hors alimentation</div>
+  </div>
+  <div class="conclusion-rows" id="concluRows"></div>
+</div>
+
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════
+//  MINI PDF — générateur PDF autonome, sans dépendance
+//  externe. Compatible hors-ligne (fichier local iOS).
+//  Expose une API proche de jsPDF (text, rect, line,
+//  setFontSize, setTextColor, setFont, save, ...).
+// ═══════════════════════════════════════════════
+function MiniPDF(opts) {
+  opts = opts || {};
+  var MM = 72 / 25.4; // mm -> pt
+  var PAGE_W = 210 * MM, PAGE_H = 297 * MM; // A4 portrait, points
+  var self = this;
+
+  var objects = [];      // array of strings, index+1 = object number
+  var pages = [];         // array of {contentObjId, streamParts:[]}
+  var fontIds = { helvetica:1, 'helvetica-bold':2 };
+  var curPage = null;
+
+  var _fontSize = 10, _bold = false;
+  var _fillColor = '0 0 0 rg', _drawColor = '0 0 0 RG', _textColor = [0,0,0];
+  var _lineWidth = 0.2;
+
+  var WINANSI_MAP = {
+    0x20AC: 0x80, // €
+    0x2018: 0x91, 0x2019: 0x92, // ' '
+    0x201C: 0x93, 0x201D: 0x94, // " "
+    0x2013: 0x96, 0x2014: 0x97, // – —
+    0x2026: 0x85, // …
+    0x2022: 0x95  // •
+  };
+  function toWinAnsi(str) {
+    str = String(str);
+    var out = '';
+    for (var i=0;i<str.length;i++) {
+      var code = str.charCodeAt(i);
+      if (WINANSI_MAP[code] !== undefined) { out += String.fromCharCode(WINANSI_MAP[code]); continue; }
+      if (code < 256) { out += str[i]; continue; }
+      out += '?';
+    }
+    return out;
+  }
+  function esc(str) {
+    return toWinAnsi(str).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+  }
+  function n2(v){ return (Math.round(v*1000)/1000).toString(); }
+
+  function newObj(content) {
+    objects.push(content);
+    return objects.length; // 1-based id
+  }
+
+  function newPage() {
+    curPage = { stream: [] };
+    pages.push(curPage);
+    // Force an explicit white background fill — some minimal/embedded PDF
+    // viewers default their canvas to black and only show colors where
+    // something was actually painted, so we paint white ourselves.
+    curPage.stream.push('1 1 1 rg\n0 0 '+n2(PAGE_W)+' '+n2(PAGE_H)+' re\nf');
+  }
+  newPage();
+
+  function mm2ptX(x){ return x*MM; }
+  function mm2ptY(y){ return PAGE_H - y*MM; } // flip y (PDF origin bottom-left)
+
+  // ── Public drawing API (jsPDF-like) ──
+  self.setFontSize = function(s){ _fontSize = s; return self; };
+  self.setFont = function(name, style){ _bold = (style === 'bold'); return self; };
+  self.setTextColor = function(r,g,b){
+    if (Array.isArray(r)) { g=r[1]; b=r[2]; r=r[0]; }
+    _textColor = [r,g,b];
+    return self;
+  };
+  self.setFillColor = function(r,g,b){
+    if (Array.isArray(r)) { g=r[1]; b=r[2]; r=r[0]; }
+    _fillColor = n2(r/255)+' '+n2(g/255)+' '+n2(b/255)+' rg';
+    return self;
+  };
+  self.setDrawColor = function(r,g,b){
+    if (Array.isArray(r)) { g=r[1]; b=r[2]; r=r[0]; }
+    _drawColor = n2(r/255)+' '+n2(g/255)+' '+n2(b/255)+' RG';
+    return self;
+  };
+  self.setLineWidth = function(w){ _lineWidth = w; return self; };
+
+  // Text width estimate in mm (Helvetica average glyph width)
+  self.getTextWidth = function(text) {
+    var avgFactor = _bold ? 0.60 : 0.52; // fraction of fontSize per character, in pt
+    var widthPt = toWinAnsi(text).length * _fontSize * avgFactor;
+    return widthPt / MM; // convert pt -> mm
+  };
+
+  self.text = function(text, x, y) {
+    var lines = Array.isArray(text) ? text : [text];
+    var lineHeightMM = _fontSize * 1.15 * (25.4/72);
+    for (var li=0; li<lines.length; li++) {
+      var px = mm2ptX(x), py = mm2ptY(y + li*lineHeightMM);
+      var fontKey = _bold ? 'F2' : 'F1';
+      var col = n2(_textColor[0]/255)+' '+n2(_textColor[1]/255)+' '+n2(_textColor[2]/255)+' rg';
+      var s = 'BT\n/'+fontKey+' '+n2(_fontSize)+' Tf\n'+col+'\n'+n2(px)+' '+n2(py)+' Td\n('+esc(lines[li])+') Tj\nET';
+      curPage.stream.push(s);
+    }
+    return self;
+  };
+
+  self.rect = function(x, y, w, h, style) {
+    var px = mm2ptX(x), py = mm2ptY(y+h), pw = w*MM, ph = h*MM;
+    var op = style === 'F' ? 'f' : (style === 'S' ? 'S' : 'f');
+    var s = (op==='f' ? _fillColor : _drawColor) + '\n' + n2(px)+' '+n2(py)+' '+n2(pw)+' '+n2(ph)+' re\n'+op;
+    curPage.stream.push(s);
+    return self;
+  };
+
+  self.line = function(x1,y1,x2,y2) {
+    var p1x=mm2ptX(x1), p1y=mm2ptY(y1), p2x=mm2ptX(x2), p2y=mm2ptY(y2);
+    var s = _drawColor+'\n'+n2(_lineWidth*MM)+' w\n'+n2(p1x)+' '+n2(p1y)+' m\n'+n2(p2x)+' '+n2(p2y)+' l\nS';
+    curPage.stream.push(s);
+    return self;
+  };
+
+  self.splitTextToSize = function(text, maxWidthMM) {
+    var words = String(text).split(' ');
+    var lines = [], cur = '';
+    for (var i=0;i<words.length;i++) {
+      var test = cur ? cur+' '+words[i] : words[i];
+      if (self.getTextWidth(test) > maxWidthMM && cur) {
+        lines.push(cur); cur = words[i];
+      } else {
+        cur = test;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  };
+
+  self.addPage = function() { newPage(); return self; };
+
+  self.save = function(filename) {
+    // Build PDF byte stream
+    var out = [];
+    var offsets = [];
+    var pos = 0;
+    function push(str) { out.push(str); pos += str.length; }
+
+    push('%PDF-1.4\n');
+
+    // Object 1: Font Helvetica
+    // Object 2: Font Helvetica-Bold
+    // Object 3..N: Pages content + page objects
+    // We'll assign object numbers manually in a fixed order:
+    // 1 Catalog, 2 Pages, 3 Font1, 4 Font2, then per-page: contentObj, pageObj
+
+    var objStrs = {};
+    var nextId = 5;
+    var pageObjIds = [];
+    var contentObjIds = [];
+
+    pages.forEach(function(pg) {
+      var streamData = pg.stream.join('\n');
+      var cId = nextId++;
+      contentObjIds.push(cId);
+      objStrs[cId] = '<< /Length '+streamData.length+' >>\nstream\n'+streamData+'\nendstream';
+    });
+
+    pages.forEach(function(pg, idx) {
+      var pId = nextId++;
+      pageObjIds.push(pId);
+      objStrs[pId] = '<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /MediaBox [0 0 '+n2(PAGE_W)+' '+n2(PAGE_H)+'] /Contents '+contentObjIds[idx]+' 0 R >>';
+    });
+
+    var kids = pageObjIds.map(function(id){ return id+' 0 R'; }).join(' ');
+    objStrs[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+    objStrs[2] = '<< /Type /Pages /Kids ['+kids+'] /Count '+pageObjIds.length+' >>';
+    objStrs[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+    objStrs[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+
+    var maxId = nextId - 1;
+    var xref = [];
+    push('');
+    var body = '';
+    var offsetsById = {};
+    var runningPos = out.join('').length;
+
+    for (var id=1; id<=maxId; id++) {
+      offsetsById[id] = runningPos;
+      var objStr = 'obj\n'+objStrs[id]+'\nendobj\n';
+      var full = id+' 0 '+objStr;
+      body += full;
+      runningPos += full.length;
+    }
+    push(body);
+
+    var xrefStart = out.join('').length;
+    var xrefTable = 'xref\n0 '+(maxId+1)+'\n0000000000 65535 f \n';
+    for (var id2=1; id2<=maxId; id2++) {
+      var off = offsetsById[id2];
+      var offStr = ('0000000000'+off).slice(-10);
+      xrefTable += offStr+' 00000 n \n';
+    }
+    push(xrefTable);
+    push('trailer\n<< /Size '+(maxId+1)+' /Root 1 0 R >>\nstartxref\n'+xrefStart+'\n%%EOF');
+
+    var pdfStr = out.join('');
+    // Convert to base64 for a data URI (works even when blob-URL downloads are blocked by embedded webviews)
+    var binary = '';
+    for (var bi=0; bi<pdfStr.length; bi++) binary += String.fromCharCode(pdfStr.charCodeAt(bi) & 0xFF);
+    var base64 = btoa(binary);
+    var dataUri = 'data:application/pdf;base64,' + base64;
+
+    showPdfLinkOverlay(dataUri, filename || 'document.pdf');
+    return self;
+  };
+}
+
+// ═══════════════════════════════════════════════
+//  Overlay avec lien manuel — nécessaire car certaines
+//  visionneuses web embarquées (WKWebView custom apps)
+//  bloquent les téléchargements déclenchés par JS (a.click()),
+//  mais autorisent un tap manuel de l'utilisateur sur un vrai lien.
+// ═══════════════════════════════════════════════
+function showPdfLinkOverlay(dataUri, filename) {
+  var old = document.getElementById('pdfOverlay');
+  if (old) old.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'pdfOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,17,23,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem;';
+
+  var card = document.createElement('div');
+  card.style.cssText = 'background:#fff;border-radius:16px;padding:1.5rem;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3);';
+
+  var title = document.createElement('div');
+  title.textContent = '📄 PDF prêt';
+  title.style.cssText = 'font-family:DM Sans,sans-serif;font-size:1.05rem;font-weight:600;color:#111827;margin-bottom:.5rem;';
+
+  var desc = document.createElement('div');
+  desc.textContent = 'Appuyez sur le bouton ci-dessous pour ouvrir ou enregistrer le PDF.';
+  desc.style.cssText = 'font-family:DM Sans,sans-serif;font-size:.85rem;color:#6b7280;margin-bottom:1.1rem;line-height:1.5;';
+
+  var link = document.createElement('a');
+  link.href = dataUri;
+  link.download = filename;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.textContent = '⬇ Ouvrir le PDF';
+  link.style.cssText = 'display:block;background:#1e40af;color:#fff;text-decoration:none;font-family:DM Sans,sans-serif;font-weight:600;font-size:.95rem;padding:.85rem;border-radius:10px;margin-bottom:.7rem;';
+
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Fermer';
+  closeBtn.style.cssText = 'background:none;border:none;color:#6b7280;font-family:DM Sans,sans-serif;font-size:.85rem;padding:.5rem;cursor:pointer;';
+  closeBtn.addEventListener('click', function(){ overlay.remove(); });
+
+  card.appendChild(title);
+  card.appendChild(desc);
+  card.appendChild(link);
+  card.appendChild(closeBtn);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+var mode = 'achat';
+var dpeSelected = '';
+
+// ═══════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════
+var fmt  = function(v){ return Math.round(v).toLocaleString('fr-FR') + ' €'; };
+var fmtM = function(v){ return Math.round(v).toLocaleString('fr-FR') + ' €/mois'; };
+var gv   = function(id){ return parseFloat(document.getElementById(id).value) || 0; };
+
+function mensualite(capital, tauxAnn, dureeAns) {
+  if (capital <= 0) return 0;
+  var r = tauxAnn / 100 / 12, n = dureeAns * 12;
+  if (r === 0) return capital / n;
+  return capital * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1);
+}
+
+// ═══════════════════════════════════════════════
+//  MODE ACHAT / LOCATION
+// ═══════════════════════════════════════════════
+function setMode(m) {
+  mode = m;
+  document.getElementById('btnAchat').classList.toggle('active', m==='achat');
+  document.getElementById('btnLoc').classList.toggle('active', m==='location');
+  document.getElementById('sectionAchat').style.display  = m==='achat'    ? '' : 'none';
+  document.getElementById('sectionLoc').style.display    = m==='location' ? '' : 'none';
+  document.getElementById('sectionCopro').style.display  = m==='achat'    ? '' : 'none';
+  document.getElementById('fieldAssurHabAchat').style.display = m==='achat' ? '' : 'none';
+  calc();
+}
+
+// ═══════════════════════════════════════════════
+//  DPE
+// ═══════════════════════════════════════════════
+function setDPE(v) {
+  dpeSelected = v;
+  document.querySelectorAll('.dpe-btn').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-dpe') === v);
+  });
+  if (typeof updateEnergyEstimation === 'function') updateEnergyEstimation();
+}
+
+// ═══════════════════════════════════════════════
+//  SLIDERS
+// ═══════════════════════════════════════════════
+function updateDuree() {
+  var v = document.getElementById('duree').value;
+  document.getElementById('dureeVal').textContent = v + ' ans';
+  document.getElementById('dureePrint').textContent = 'Durée : ' + v + ' ans';
+}
+function updateTaux() {
+  var v = parseFloat(document.getElementById('taux').value).toFixed(1).replace('.',',');
+  document.getElementById('tauxVal').textContent = v + ' %';
+  document.getElementById('tauxPrint').textContent = 'Taux : ' + v + ' %';
+}
+function updateAssur() {
+  var v = parseFloat(document.getElementById('assurTaux').value).toFixed(2).replace('.',',');
+  document.getElementById('assurVal').textContent = v + ' %';
+  document.getElementById('assurPrint').textContent = 'Assurance emprunteur : ' + v + ' %';
+}
+function setTaux(v) {
+  document.getElementById('taux').value = v;
+  updateTaux(); calc();
+}
+
+// ═══════════════════════════════════════════════
+//  SYNC "Bien visité" → sections financières
+// ═══════════════════════════════════════════════
+function syncPrix() {
+  var v = document.getElementById('prixBienVisite').value;
+  if (v) { document.getElementById('prixBien').value = v; calc(); }
+}
+function syncCharges() {
+  var v = document.getElementById('chargesVisite').value;
+  if (v) { document.getElementById('chargesCopro').value = v; calc(); }
+}
+function syncTF() {
+  var v = document.getElementById('tfVisite').value;
+  if (v) { document.getElementById('taxeFonciere').value = v; calc(); }
+}
+
+// ═══════════════════════════════════════════════
+//  ESTIMATION CONSOMMATION ÉNERGIE (chauffage + eau chaude)
+//  selon DPE + type d'énergie + mode individuel/collectif
+// ═══════════════════════════════════════════════
+var segState = { chauffEnergie:null, chauffMode:null, eauEnergie:null, eauMode:null };
+var ELEC_BASE = 28; // €/mois — consommation électrique courante hors chauffage/eau chaude
+var DPE_ORDER = ['A','B','C','D','E','F','G'];
+
+// Table : [A,B,C,D,E,F,G] en €/mois
+var ENERGY_TABLE = {
+  'gaz|none':        [30, 48, 76, 113, 153, 197, 250],  // chauffage individuel gaz seul
+  'gaz|gaz':         [45, 63, 91, 128, 168, 212, 265],  // chauffage + eau chaude gaz
+  'gaz|electrique':  [61, 79, 107, 144, 184, 228, 281], // chauffage gaz + eau chaude électrique
+  'electrique|none':       [37, 66, 99, 149, 199, 258, 333],  // chauffage individuel électrique seul
+  'electrique|electrique': [68, 94, 134, 187, 245, 309, 385], // chauffage + eau chaude électrique
+  'electrique|gaz':        [65, 94, 127, 177, 227, 286, 361], // chauffage électrique + eau chaude gaz
+};
+// Eau chaude seule (chauffage collectif, donc hors table ci-dessus) — moyennes mensuelles fournies.
+var EAU_SEULE = { gaz: 36, electrique: 38 };
+
+function setSeg(group, val) {
+  segState[group] = val;
+  document.querySelectorAll('.seg-btn[data-group="'+group+'"]').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-val') === val);
+  });
+  updateEnergyEstimation();
+}
+
+function updateEnergyEstimation() {
+  var box = document.getElementById('energieEstimation');
+  var chEnergie = segState.chauffEnergie;
+  var chMode    = segState.chauffMode;
+  var eauEnergie= segState.eauEnergie;
+  var eauMode   = segState.eauMode;
+  var dpeIdx    = DPE_ORDER.indexOf(dpeSelected);
+
+  if (!chMode || dpeIdx === -1) {
+    box.textContent = 'Sélectionnez chauffage, eau chaude et DPE pour estimer la consommation énergie.';
+    return;
+  }
+  if (chMode === 'Individuel' && !chEnergie) {
+    box.textContent = 'Sélectionnez l\'énergie du chauffage (gaz ou électrique).';
+    return;
+  }
+
+  var chauffCollectif = (chMode === 'Collectif');
+  var eauCollectif    = (eauMode === 'Collectif');
+
+  var noteParts = [];
+  var total = ELEC_BASE;
+
+  if (chauffCollectif) {
+    noteParts.push('Chauffage collectif — généralement déjà inclus dans les charges de copropriété, non ré-estimé ici.');
+    if (eauEnergie && !eauCollectif) {
+      // Eau chaude individuelle malgré un chauffage collectif : on estime l'eau
+      // chaude seule via les valeurs dérivées, indépendantes du DPE.
+      var keyEauSeule = eauEnergie === 'Gaz' ? 'gaz' : 'electrique';
+      total += EAU_SEULE[keyEauSeule];
+      noteParts.push('Eau chaude individuelle (' + eauEnergie.toLowerCase() + ') estimée à ' + EAU_SEULE[keyEauSeule] + ' €/mois (valeur indépendante du DPE).');
+    } else if (eauCollectif) {
+      noteParts.push('Eau chaude collective — généralement incluse dans les charges de copropriété.');
+    }
+  } else {
+    var keyEnergie = chEnergie === 'Gaz' ? 'gaz' : 'electrique';
+    var chauffEauKey;
+    if (!eauEnergie || eauCollectif) {
+      chauffEauKey = keyEnergie + '|none';
+      if (eauCollectif) noteParts.push('Eau chaude collective — généralement incluse dans les charges de copropriété.');
+    } else {
+      var keyEau = eauEnergie === 'Gaz' ? 'gaz' : 'electrique';
+      chauffEauKey = keyEnergie + '|' + keyEau;
+    }
+    var vals = ENERGY_TABLE[chauffEauKey];
+    if (vals) {
+      total += vals[dpeIdx];
+    }
+  }
+
+  document.getElementById('energieEstimation').innerHTML =
+    '≈ <b>' + Math.round(total) + ' €/mois</b> pour le DPE ' + dpeSelected +
+    ' (dont ' + ELEC_BASE + ' €/mois électricité courante hors chauffage/eau chaude).' +
+    (noteParts.length ? '<br>' + noteParts.join('<br>') : '');
+
+  // Sync auto vers le champ "Énergies" des charges vie courante
+  var energiesInput = document.getElementById('energies');
+  if (energiesInput) { energiesInput.value = Math.round(total); calc(); }
+}
+
+// ═══════════════════════════════════════════════
+//  ACCORDION
+// ═══════════════════════════════════════════════
+function toggleSection(head) {
+  var body = head.nextElementSibling;
+  var chev = head.querySelector('.chevron');
+  var open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  head.classList.toggle('open', !open);
+  if (chev) chev.classList.toggle('open', !open);
+}
+
+// ═══════════════════════════════════════════════
+//  CALC
+// ═══════════════════════════════════════════════
+function calc() {
+  var revRetraite  = gv('revRetraite');
+  var revFamille   = gv('revFamille');
+  var revCompagnon = gv('revCompagnon');
+  var revAutre     = gv('revAutre');
+  var revTotal     = revRetraite + revFamille + revCompagnon + revAutre;
+
+  var mutuelle     = gv('mutuelle');
+  var energies     = gv('energies');
+  var mobile       = gv('mobile');
+  var internet     = gv('internet');
+  var assurVoiture = gv('assurVoiture');
+  var autresCharges= gv('autresCharges');
+  var totalVie = mutuelle + energies + mobile + internet + assurVoiture + autresCharges;
+
+  document.getElementById('badgeRev').textContent = fmtM(revTotal);
+  document.getElementById('badgeVie').textContent = fmtM(totalVie);
+
+  var totalLogement = 0;
+  var synthRows = [];
+
+  if (mode === 'achat') {
+    var prix         = gv('prixBien');
+    var apport       = gv('apport');
+    var fraisNotaire = gv('fraisNotaire');
+    var duree        = gv('duree') || 20;
+    var taux         = gv('taux') || 3.5;
+    var assurTaux    = gv('assurTaux') || 0.35;
+    var chargesCopro = gv('chargesCopro');
+    var taxeFonciere = gv('taxeFonciere');
+    var assurHab     = gv('assurHab');
+
+    var capital     = Math.max(0, prix - apport);
+    var mensCredit  = mensualite(capital, taux, duree);
+    var mensAssurE  = (capital * assurTaux / 100) / 12;
+    var mensTF      = taxeFonciere / 12;
+    totalLogement   = mensCredit + mensAssurE + chargesCopro + mensTF + assurHab;
+
+    var pctApport = prix > 0 ? Math.min(100, apport/prix*100) : 0;
+    var gc = pctApport >= 20 ? '#15803d' : pctApport >= 10 ? '#d97706' : '#b91c1c';
+    document.getElementById('gaugeFill').style.width = pctApport + '%';
+    document.getElementById('gaugeFill').style.background = gc;
+    document.getElementById('gaugeLeft').textContent  = 'Emprunté : ' + fmt(capital);
+    document.getElementById('gaugeRight').textContent = 'Apport : ' + Math.round(pctApport) + ' %';
+    document.getElementById('tfMensuel').textContent  = Math.round(mensTF);
+    document.getElementById('badgeAchat').textContent = fmtM(mensCredit + mensAssurE);
+    document.getElementById('badgeCopro').textContent = fmtM(chargesCopro + mensTF + assurHab);
+
+    var te  = revTotal > 0 ? (mensCredit + mensAssurE) / revTotal * 100 : 0;
+    var tet = revTotal > 0 ? totalLogement / revTotal * 100 : 0;
+
+    synthRows = [
+      {l:'Prix du bien',            v:fmt(prix),              c:''},
+      {l:'Apport personnel',        v:fmt(apport),            c:'green'},
+      {l:'Capital emprunté',        v:fmt(capital),           c:'blue'},
+      {l:'Frais de notaire',        v:fmt(fraisNotaire),      c:'red'},
+      {l:'Coût total acquisition',  v:fmt(prix+fraisNotaire), c:'red'},
+      {sep:true},
+      {l:'Mensualité crédit',       v:fmtM(mensCredit),       c:'red'},
+      {l:'Assurance emprunteur',    v:fmtM(mensAssurE),       c:'red'},
+      {l:'Charges copropriété',     v:fmtM(chargesCopro),     c:'red'},
+      {l:'Taxe foncière (÷12)',     v:fmtM(mensTF),           c:'red'},
+      {l:'Assurance habitation',    v:fmtM(assurHab),         c:'red'},
+      {l:'TOTAL logement/mois',     v:fmtM(totalLogement),    c:'red', bold:true},
+      {sep:true},
+      {l:"Taux d'effort crédit",    v:Math.round(te)+'%',     c:te>35?'red':'green'},
+      {l:"Taux d'effort total",     v:Math.round(tet)+'%',    c:tet>40?'red':'green'},
+      {l:'Intérêts totaux',         v:fmt(mensCredit*duree*12-capital), c:'red'},
+    ];
+  }
+
+  if (mode === 'location') {
+    var loyer      = gv('loyer');
+    var chargesLoc = gv('chargesLoc');
+    var assurLoc   = gv('assurLoc');
+    totalLogement  = loyer + chargesLoc + assurLoc;
+    document.getElementById('badgeLoc').textContent = fmtM(loyer);
+    var te = revTotal > 0 ? loyer/revTotal*100 : 0;
+    synthRows = [
+      {l:'Loyer mensuel',        v:fmtM(loyer),        c:'red'},
+      {l:'Charges locatives',    v:fmtM(chargesLoc),   c:'red'},
+      {l:'Assurance habitation', v:fmtM(assurLoc),     c:'red'},
+      {l:'TOTAL logement/mois',  v:fmtM(totalLogement),c:'red', bold:true},
+      {sep:true},
+      {l:"Taux d'effort loyer",  v:Math.round(te)+'%', c:te>33?'red':'green'},
+    ];
+  }
+
+  var reste       = revTotal - totalLogement - totalVie;
+  var alimObj     = 800;
+  var margeFinale = reste - alimObj;
+
+  // Synthèse HTML
+  var html = '<table class="mini-table">';
+  html += '<tr><td colspan="2" style="font-weight:600;padding:.3rem .1rem;color:var(--muted);font-size:.72rem">REVENUS</td></tr>';
+  html += '<tr><td>Retraites (CNAV+DRFIP+AG2R)</td><td class="amount-pos">'+fmtM(revRetraite)+'</td></tr>';
+  if (revFamille>0) html += '<tr><td>Aide famille</td><td class="amount-pos">'+fmtM(revFamille)+'</td></tr>';
+  if (revCompagnon>0) html += '<tr><td>Aide compagnon</td><td class="amount-pos">'+fmtM(revCompagnon)+'</td></tr>';
+  if (revAutre>0)   html += '<tr><td>Autre revenu</td><td class="amount-pos">'+fmtM(revAutre)+'</td></tr>';
+  html += '<tr class="total"><td>Total revenus</td><td style="color:var(--green)">'+fmtM(revTotal)+'</td></tr>';
+  html += '<tr><td colspan="2" style="padding:.4rem 0"></td></tr>';
+  html += '<tr><td colspan="2" style="font-weight:600;padding:.3rem .1rem;color:var(--muted);font-size:.72rem">CHARGES LOGEMENT</td></tr>';
+  synthRows.forEach(function(r){
+    if (r.sep) { html+='<tr><td colspan="2"><div class="divider"></div></td></tr>'; return; }
+    var cls = r.c==='red'?'class="amount-neg"':r.c==='green'?'class="amount-pos"':r.c==='blue'?'style="color:var(--blue);font-weight:600"':'';
+    html += '<tr'+(r.bold?' class="total"':'')+'>'+
+            '<td>'+r.l+'</td>'+
+            '<td '+cls+'>'+r.v+'</td></tr>';
+  });
+  html += '<tr><td colspan="2" style="padding:.4rem 0"></td></tr>';
+  html += '<tr><td colspan="2" style="font-weight:600;padding:.3rem .1rem;color:var(--muted);font-size:.72rem">CHARGES VIE COURANTE</td></tr>';
+  html += '<tr><td>Mutuelle santé</td><td class="amount-neg">'+fmtM(mutuelle)+'</td></tr>';
+  html += '<tr><td>Énergies</td><td class="amount-neg">'+fmtM(energies)+'</td></tr>';
+  html += '<tr><td>Téléphone mobile</td><td class="amount-neg">'+fmtM(mobile)+'</td></tr>';
+  html += '<tr><td>Internet / fibre</td><td class="amount-neg">'+fmtM(internet)+'</td></tr>';
+  html += '<tr><td>Assurance voiture</td><td class="amount-neg">'+fmtM(assurVoiture)+'</td></tr>';
+  if (autresCharges>0) html += '<tr><td>Autres charges</td><td class="amount-neg">'+fmtM(autresCharges)+'</td></tr>';
+  html += '<tr class="total"><td>Total charges courantes</td><td class="amount-neg">'+fmtM(totalVie)+'</td></tr>';
+  html += '</table>';
+  document.getElementById('syntheseBody').innerHTML = html;
+
+  // Comparaison
+  var loyerR  = gv('loyer') || 900;
+  var cLocR   = gv('chargesLoc') || 150;
+  var aLocR   = gv('assurLoc') || 20;
+  var totLoc  = loyerR + cLocR + aLocR;
+  var prixR   = gv('prixBien') || 285000;
+  var apR     = gv('apport') || 0;
+  var tR      = gv('taux') || 3.5;
+  var dR      = gv('duree') || 20;
+  var aTR     = gv('assurTaux') || 0.35;
+  var cR      = gv('chargesCopro') || 0;
+  var tfR     = (gv('taxeFonciere') || 0) / 12;
+  var aHR     = gv('assurHab') || 0;
+  var capR    = Math.max(0, prixR - apR);
+  var mR      = mensualite(capR, tR, dR);
+  var assR    = (capR * aTR / 100) / 12;
+  var totAchat= mR + assR + cR + tfR + aHR;
+  var diff    = totLoc - totAchat;
+
+  var cmpHtml = '<table class="mini-table">';
+  cmpHtml += '<tr><td style="font-weight:600">Scénario Location</td><td style="color:var(--blue);font-weight:600">'+fmtM(totLoc)+'</td></tr>';
+  cmpHtml += '<tr><td style="padding-left:.7rem;font-size:.78rem;color:var(--muted)">Loyer '+fmtM(loyerR)+' + charges '+fmtM(cLocR)+' + ass. '+fmtM(aLocR)+'</td><td></td></tr>';
+  cmpHtml += '<tr><td colspan="2" style="padding:.3rem"></td></tr>';
+  cmpHtml += '<tr><td style="font-weight:600">Scénario Achat</td><td style="color:var(--blue);font-weight:600">'+fmtM(totAchat)+'</td></tr>';
+  cmpHtml += '<tr><td style="padding-left:.7rem;font-size:.78rem;color:var(--muted)">Crédit '+fmtM(mR)+' + ass. '+fmtM(assR)+' + copro/TF '+fmtM(cR+tfR+aHR)+'</td><td></td></tr>';
+  cmpHtml += '<tr><td colspan="2" style="padding:.3rem"></td></tr>';
+  var diffCls = diff>0 ? 'green' : 'red';
+  var diffTxt = diff>0 ? 'Achat − '+fmt(Math.abs(diff)) : 'Location − '+fmt(Math.abs(diff));
+  cmpHtml += '<tr class="total '+diffCls+'"><td>Avantage mensuel</td><td>'+diffTxt+'</td></tr>';
+  cmpHtml += '</table>';
+  var infoTxt;
+  if (Math.abs(diff)<50) infoTxt = '⚖️ Les deux scénarios sont très proches financièrement.';
+  else if (diff>0) infoTxt = '🏡 L\'achat est moins cher de '+fmt(Math.abs(diff))+'/mois. Sur '+dR+' ans : économie de '+fmt(Math.abs(diff)*dR*12)+' + patrimoine constitué.';
+  else infoTxt = '🔑 La location est moins chère de '+fmt(Math.abs(diff))+'/mois. Sur '+dR+' ans : économie de '+fmt(Math.abs(diff)*dR*12)+', sans patrimoine.';
+  cmpHtml += '<div class="info-chip" style="margin-top:.7rem">'+infoTxt+'</div>';
+  document.getElementById('compareBody').innerHTML = cmpHtml;
+
+  // Conclusion
+  var conclu = document.getElementById('conclusion');
+  conclu.className = 'conclusion ' + (reste>600?'ok':reste>200?'warn':'bad');
+  document.getElementById('concluNum').textContent = fmt(reste);
+  document.getElementById('concluSub').textContent = '/mois — hors alimentation';
+  var rHtml =
+    '<span><span>Revenus totaux</span><b>'+fmtM(revTotal)+'</b></span>'+
+    '<span><span>− Charges logement</span><b>−'+fmtM(totalLogement)+'</b></span>'+
+    '<span><span>− Charges vie courante</span><b>−'+fmtM(totalVie)+'</b></span>'+
+    '<span><span>= Reste à vivre</span><b>'+fmtM(reste)+'</b></span>'+
+    '<span><span>− Alimentation (objectif)</span><b>−'+fmtM(alimObj)+'</b></span>'+
+    '<span style="border-top:1px solid rgba(0,0,0,.12);padding-top:.3rem;font-weight:700">'+
+    '<span>Marge nette estimée</span><b>'+fmtM(margeFinale)+'</b></span>';
+  document.getElementById('concluRows').innerHTML = rHtml;
+}
+
+// ═══════════════════════════════════════════════
+//  PDF via jsPDF (fonctionne en fichier local)
+// ═══════════════════════════════════════════════
+function exportPDF() {
+  var doc = new MiniPDF();
+
+  var W = 210, H = 297, margin = 16, y = 0, col = W - 2*margin;
+  var blue = [30,64,175], blueLight = [219,234,254];
+  var green = [21,128,61], greenLight = [220,252,231];
+  var red = [185,28,28], redLight = [254,226,226];
+  var orange = [194,65,12], orangeLight = [255,237,213];
+  var dark = [17,24,39], muted = [107,114,128], border = [225,228,238], surface2=[240,242,248];
+
+  var DPE_COLORS = {
+    A:[0,154,68], B:[81,184,72], C:[181,211,52], D:[255,242,0],
+    E:[247,166,0], F:[238,114,3], G:[221,29,33]
+  };
+  var DPE_TEXT = { A:[255,255,255], B:[255,255,255], C:[34,34,34], D:[34,34,34], E:[34,34,34], F:[255,255,255], G:[255,255,255] };
+
+  function getVal(id) { var el=document.getElementById(id); return el ? el.value : ''; }
+  function getCheckedPills(groupSel) {
+    var pills = document.querySelectorAll(groupSel+' .check-pill.checked');
+    return Array.from(pills).map(function(p){ return p.textContent.trim(); }).join('  ·  ');
+  }
+  // Nombre formaté avec espace normale (pas d'espace fine insécable qui casse le rendu PDF)
+  function numFmt(v) {
+    v = Math.round(v);
+    var s = Math.abs(v).toString();
+    var out = '';
+    for (var i=0;i<s.length;i++) {
+      if (i>0 && (s.length-i)%3===0) out += ' ';
+      out += s[i];
+    }
+    return (v<0?'-':'') + out;
+  }
+  function euro(v)   { return numFmt(v) + ' €'; }
+  function euroM(v)  { return euro(v) + '/mois'; }
+
+  function txt(t, x, yy, size, color, bold, align) {
+    doc.setFontSize(size||9);
+    doc.setTextColor.apply(doc, color||dark);
+    doc.setFont('helvetica', bold?'bold':'normal');
+    var xx = x;
+    if (align === 'right') { xx = x - doc.getTextWidth(t); }
+    doc.text(t, xx, yy);
+  }
+  function hLine(yy, c) {
+    doc.setDrawColor.apply(doc, c||border);
+    doc.setLineWidth(0.25);
+    doc.line(margin, yy, W-margin, yy);
+  }
+  function fillRect(x,yy,w,h,color) {
+    doc.setFillColor.apply(doc, color);
+    doc.rect(x, yy, w, h, 'F');
+  }
+  // Ligne label / valeur alignée à droite — un seul tracé, plus de doublon
+  function row(label, value, yy, valColor, opts) {
+    opts = opts || {};
+    txt(label, margin+2, yy, opts.size||9, opts.labelColor||muted, false);
+    txt(value, W-margin-2, yy, opts.size||9, valColor||dark, true, 'right');
+    return yy + (opts.gap||5.2);
+  }
+  // Bandeau de section : barre d'accent + titre, fond très léger
+  function sectionHeader(label, yy) {
+    fillRect(margin, yy, col, 7, surface2);
+    fillRect(margin, yy, 1.3, 7, blue);
+    txt(label, margin+4, yy+5, 8.3, blue, true);
+    return yy + 10;
+  }
+  function checkPageBreak(yy, needed) {
+    if (yy + needed > H - 18) {
+      doc.addPage();
+      return 16;
+    }
+    return yy;
+  }
+
+  // ═══════════ EN-TÊTE ═══════════
+  fillRect(0, 0, W, 26, blue);
+  var ville  = getVal('ville');
+  var titre  = 'Simulateur Logement';
+  if (ville) titre += '  —  ' + ville;
+  txt(titre, margin, 12, 14, [255,255,255], true);
+  var modeLabel = mode==='achat' ? 'MODE ACHAT' : 'MODE LOCATION';
+  fillRect(margin, 17, doc.getTextWidth(modeLabel)+6, 5.5, [255,255,255]);
+  txt(modeLabel, margin+3, 20.8, 7.5, blue, true);
+  var dateStr = new Date().toLocaleDateString('fr-FR');
+  txt(dateStr, W-margin, 20.5, 8, [220,228,250], false, 'right');
+  y = 33;
+
+  // ═══════════ BIEN VISITÉ ═══════════
+  y = sectionHeader('BIEN VISITÉ', y);
+
+  var dateV  = getVal('dateVisite');
+  var quart  = getVal('quartier');
+  var etage  = getVal('etage');
+  var pieces = getVal('nbPieces');
+  var metrage= getVal('metrage');
+  var lots   = getVal('nbLots');
+  var remarq = getVal('remarques');
+  var equip  = getCheckedPills('#equipGroup');
+  var chauffTxt = (typeof segState !== 'undefined' && segState.chauffEnergie) ?
+    segState.chauffEnergie + (segState.chauffMode ? ' · '+segState.chauffMode : '') : '—';
+  var eauTxt = (typeof segState !== 'undefined' && segState.eauEnergie) ?
+    segState.eauEnergie + (segState.eauMode ? ' · '+segState.eauMode : '') : '—';
+  var energieEstimTxt = document.getElementById('energieEstimation') ?
+    document.getElementById('energieEstimation').textContent.trim() : '';
+  var dpe    = (typeof dpeSelected !== 'undefined' && dpeSelected) ? dpeSelected : '';
+
+  var bienRows = [
+    ['Date de visite', dateV || '—'],
+    ['Ville / Quartier', (ville||'—') + (quart ? '  ·  '+quart : '')],
+    ['Étage / Pièces / Surface', (etage?etage+'e':'—') + '   ·   ' + (pieces||'—') + ' pièces   ·   ' + (metrage||'—') + ' m²'],
+    ['Nb lots copropriété', lots || '—'],
+    ['Équipements', equip || '—'],
+    ['Chauffage', chauffTxt],
+    ['Eau chaude', eauTxt],
+    ['Prix affiché', getVal('prixBienVisite') ? euro(+getVal('prixBienVisite')) : '—'],
+    ['Charges copro', getVal('chargesVisite') ? getVal('chargesVisite')+' €/mois' : '—'],
+    ['Taxe foncière', getVal('tfVisite') ? getVal('tfVisite')+' €/an' : '—'],
+  ];
+  bienRows.forEach(function(r, idx){
+    if (idx % 2 === 1) fillRect(margin, y-3.7, col, 5.2, [247,248,252]);
+    txt(r[0], margin+3, y, 8.5, muted, false);
+    txt(r[1], margin+62, y, 8.5, dark, true);
+    y += 5.2;
+  });
+
+  // DPE chip coloré
+  if (dpe && DPE_COLORS[dpe]) {
+    txt('DPE', margin+3, y, 8.5, muted, false);
+    fillRect(margin+62, y-3.6, 7, 5, DPE_COLORS[dpe]);
+    txt(dpe, margin+62+3.5-1.3, y, 8.5, DPE_TEXT[dpe], true);
+    y += 5.2;
+  }
+
+  if (remarq) {
+    txt('Remarques', margin+3, y, 8.5, muted, false);
+    var lines = doc.splitTextToSize(remarq, col-64);
+    doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(dark[0],dark[1],dark[2]);
+    doc.text(lines, margin+62, y);
+    y += lines.length * 4.3;
+  }
+  y += 4;
+
+  // ═══════════ REVENUS ═══════════
+  y = checkPageBreak(y, 30);
+  y = sectionHeader('REVENUS MENSUELS', y);
+
+  var revRet = gv('revRetraite'), revFam = gv('revFamille'), revComp = gv('revCompagnon'), revAut = gv('revAutre');
+  var revTot = revRet + revFam + revComp + revAut;
+  y = row('Retraites (CNAV + DRFIP + AG2R)', euroM(revRet), y, dark);
+  if (revFam>0) y = row('Aide famille', euroM(revFam), y, dark);
+  if (revComp>0) y = row('Aide compagnon', euroM(revComp), y, dark);
+  if (revAut>0) y = row('Autre revenu', euroM(revAut), y, dark);
+  hLine(y-1.5);
+  y += 1;
+  fillRect(margin, y-3.8, col, 6.5, greenLight);
+  txt('TOTAL REVENUS', margin+3, y+0.7, 9.5, green, true);
+  txt(euroM(revTot), W-margin-3, y+0.7, 9.5, green, true, 'right');
+  y += 9.5;
+
+  // ═══════════ LOGEMENT ═══════════
+  y = checkPageBreak(y, 45);
+  y = sectionHeader('CHARGES LOGEMENT — ' + (mode==='achat' ? 'ACHAT' : 'LOCATION'), y);
+
+  var totLog = 0;
+
+  if (mode === 'achat') {
+    var prix=gv('prixBien'), apport=gv('apport'), fn=gv('fraisNotaire');
+    var duree=gv('duree')||20, taux=gv('taux')||3.5, asTaux=gv('assurTaux')||0.35;
+    var copro=gv('chargesCopro'), tf=gv('taxeFonciere'), ah=gv('assurHab');
+    var cap=Math.max(0,prix-apport);
+    var mens=mensualite(cap,taux,duree);
+    var assE=(cap*asTaux/100)/12;
+    var mensTF=tf/12;
+    totLog=mens+assE+copro+mensTF+ah;
+    var te=revTot>0?(mens+assE)/revTot*100:0;
+    var tet=revTot>0?totLog/revTot*100:0;
+
+    y = row('Prix du bien', euro(prix), y);
+    y = row('Apport personnel', euro(apport), y, green);
+    y = row('Capital emprunté', euro(cap), y, orange);
+    y = row('Frais de notaire (estimés)', euro(fn), y, red);
+    y = row('Coût total acquisition', euro(prix+fn), y, red, {size:8.5});
+    hLine(y-1.5); y += 1;
+    y = row('Mensualité crédit (' + duree + ' ans, ' + parseFloat(taux).toFixed(1).replace('.',',') + ' %)', euroM(mens), y, red);
+    y = row('Assurance emprunteur (' + parseFloat(asTaux).toFixed(2).replace('.',',') + ' %)', euroM(assE), y, red);
+    y = row('Charges copropriété', euroM(copro), y, red);
+    y = row('Taxe foncière (÷12)', euroM(mensTF), y, red);
+    y = row('Assurance habitation', euroM(ah), y, red);
+    hLine(y-1.5); y += 1;
+    fillRect(margin, y-3.8, col, 6.5, redLight);
+    txt('TOTAL LOGEMENT / MOIS', margin+3, y+0.7, 9.5, red, true);
+    txt(euroM(totLog), W-margin-3, y+0.7, 9.5, red, true, 'right');
+    y += 9.5;
+    y = row("Taux d'effort crédit / revenus", Math.round(te)+' %', y, te>35?red:green);
+    y = row('Intérêts totaux sur la durée', euro(mens*duree*12-cap), y, red);
+  } else {
+    var loyer=gv('loyer'), cLoc=gv('chargesLoc'), aLoc=gv('assurLoc');
+    totLog=loyer+cLoc+aLoc;
+    var te=revTot>0?loyer/revTot*100:0;
+    y = row('Loyer mensuel (hors charges)', euroM(loyer), y, red);
+    y = row('Charges locatives', euroM(cLoc), y, red);
+    y = row('Assurance habitation', euroM(aLoc), y, red);
+    hLine(y-1.5); y += 1;
+    fillRect(margin, y-3.8, col, 6.5, redLight);
+    txt('TOTAL LOGEMENT / MOIS', margin+3, y+0.7, 9.5, red, true);
+    txt(euroM(totLog), W-margin-3, y+0.7, 9.5, red, true, 'right');
+    y += 9.5;
+    y = row("Taux d'effort loyer / revenus", Math.round(te)+' %', y, te>33?red:green);
+  }
+  y += 3;
+
+  // ═══════════ VIE COURANTE ═══════════
+  y = checkPageBreak(y, 40);
+  y = sectionHeader('CHARGES VIE COURANTE', y);
+
+  var mu=gv('mutuelle'), en=gv('energies'), mo=gv('mobile'), nt=gv('internet');
+  var av=gv('assurVoiture'), au=gv('autresCharges');
+  var totVie=mu+en+mo+nt+av+au;
+  y = row('Mutuelle santé', euroM(mu), y, red);
+  y = row('Énergies (élec / gaz / eau)', euroM(en), y, red);
+  y = row('Téléphone mobile', euroM(mo), y, red);
+  y = row('Internet / fibre', euroM(nt), y, red);
+  y = row('Assurance voiture', euroM(av), y, red);
+  if (au>0) y = row('Autres charges', euroM(au), y, red);
+  hLine(y-1.5); y += 1;
+  fillRect(margin, y-3.8, col, 6.5, redLight);
+  txt('TOTAL VIE COURANTE / MOIS', margin+3, y+0.7, 9.5, red, true);
+  txt(euroM(totVie), W-margin-3, y+0.7, 9.5, red, true, 'right');
+  y += 8;
+
+  // ═══════════ CONCLUSION ═══════════
+  y = checkPageBreak(y, 38);
+  var reste = revTot - totLog - totVie;
+  var marge = reste - 800;
+  var boxColor  = reste>600 ? greenLight : reste>200 ? orangeLight : redLight;
+  var textColor = reste>600 ? green      : reste>200 ? orange      : red;
+
+  fillRect(margin, y, col, 36, boxColor);
+  fillRect(margin, y, 1.6, 36, textColor);
+  txt('CONCLUSION — RESTE À VIVRE', margin+5, y+7, 9, textColor, true);
+  txt('Reste à vivre mensuel (hors budget alimentation) :', margin+5, y+14.5, 8.5, dark, false);
+  doc.setFontSize(19); doc.setFont('helvetica','bold'); doc.setTextColor(textColor[0],textColor[1],textColor[2]);
+  doc.text(euroM(reste), margin+5, y+25);
+  txt('Marge nette après budget courses (800 €/mois) :  ' + euroM(marge), margin+5, y+32, 8.5, textColor, false);
+  y += 40;
+
+  // ═══════════ PIED DE PAGE ═══════════
+  hLine(H-14, border);
+  txt('Document confidentiel  ·  Simulateur Logement  ·  généré le ' + dateStr, margin, H-10, 7, muted, false);
+
+  // ── SAVE ──
+  var filename = 'Logement_' + (ville||'Bien') + '_' + new Date().toISOString().slice(0,10) + '.pdf';
+  doc.save(filename);
+}
+
+// ═══════════════════════════════════════════════
+//  INIT — tous les écouteurs ici, pas d'inline
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Mode toggle
+  document.getElementById('btnAchat').addEventListener('click', function(){ setMode('achat'); });
+  document.getElementById('btnLoc').addEventListener('click',   function(){ setMode('location'); });
+
+  // PDF button
+  document.getElementById('btnPDF').addEventListener('click', exportPDF);
+
+  // Print button — alternative native approach (may work better in some webviews)
+  document.getElementById('btnPrint').addEventListener('click', function(){
+    document.querySelectorAll('.section-body').forEach(function(b){ b.classList.add('open'); });
+    document.querySelectorAll('.section-head').forEach(function(h){ h.classList.add('open'); });
+    document.querySelectorAll('.chevron').forEach(function(c){ c.classList.add('open'); });
+    setTimeout(function(){ window.print(); }, 150);
+  });
+
+  // Accordéons
+  document.querySelectorAll('.section-head').forEach(function(h){
+    h.addEventListener('click', function(){ toggleSection(h); });
+  });
+
+  // Checkboxes pills (touch + click)
+  document.querySelectorAll('.check-pill').forEach(function(pill){
+    pill.addEventListener('click', function(e){
+      e.preventDefault();
+      pill.classList.toggle('checked');
+    });
+    pill.addEventListener('touchend', function(e){
+      e.preventDefault();
+      pill.classList.toggle('checked');
+    }, {passive:false});
+  });
+
+  // DPE buttons
+  document.querySelectorAll('.dpe-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ setDPE(btn.getAttribute('data-dpe')); });
+    btn.addEventListener('touchend', function(e){ e.preventDefault(); setDPE(btn.getAttribute('data-dpe')); }, {passive:false});
+  });
+
+  // Chauffage / Eau chaude segment buttons
+  document.querySelectorAll('.seg-btn[data-group]').forEach(function(btn){
+    var grp = btn.getAttribute('data-group'), val = btn.getAttribute('data-val');
+    btn.addEventListener('click', function(){ setSeg(grp, val); });
+    btn.addEventListener('touchend', function(e){ e.preventDefault(); setSeg(grp, val); }, {passive:false});
+  });
+
+  // Taux chips
+  var tauxChips = document.querySelectorAll('.taux-chip');
+  if (tauxChips[0]) tauxChips[0].addEventListener('click', function(){ setTaux(3.2); });
+  if (tauxChips[1]) tauxChips[1].addEventListener('click', function(){ setTaux(3.5); });
+  if (tauxChips[2]) tauxChips[2].addEventListener('click', function(){ setTaux(3.8); });
+
+  // Sliders
+  document.getElementById('duree').addEventListener('input', function(){ updateDuree(); calc(); });
+  document.getElementById('taux').addEventListener('input',  function(){ updateTaux();  calc(); });
+  document.getElementById('assurTaux').addEventListener('input', function(){ updateAssur(); calc(); });
+
+  // Inputs numériques
+  ['revRetraite','revFamille','revCompagnon','revAutre',
+   'prixBien','apport','fraisNotaire',
+   'loyer','chargesLoc','assurLoc',
+   'chargesCopro','taxeFonciere','assurHab',
+   'mutuelle','energies','mobile','internet','assurVoiture','autresCharges'
+  ].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', calc);
+  });
+
+  // Sync bien visité
+  document.getElementById('prixBienVisite').addEventListener('input', syncPrix);
+  document.getElementById('chargesVisite').addEventListener('input',  syncCharges);
+  document.getElementById('tfVisite').addEventListener('input',       syncTF);
+
+  // Init affichage
+  updateDuree(); updateTaux(); updateAssur();
+  calc();
+});
+</script>
+</body>
+</html>
