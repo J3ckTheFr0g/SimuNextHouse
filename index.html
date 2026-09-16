@@ -311,21 +311,21 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
       <button class="dpe-btn dpe-G" data-dpe="G">G</button>
     </div>
 
-    <!-- Prix, charges, impôts fonciers intégrés ici aussi pour le bien -->
+    <!-- Prix/Loyer, charges, impôts fonciers — s'adaptent au mode Achat/Location -->
     <div class="field-2">
       <div class="field">
-        <label>Prix affiché (€)</label>
-        <input type="number" id="prixBienVisite" placeholder="ex. 285000" oninput="syncPrix()">
+        <label id="prixVisiteLabel">Prix affiché (€)</label>
+        <input type="number" id="prixBienVisite" placeholder="ex. 285000">
       </div>
       <div class="field">
-        <label>Charges copro (€/mois)</label>
-        <input type="number" id="chargesVisite" placeholder="ex. 150" oninput="syncCharges()">
+        <label id="chargesVisiteLabel">Charges copro (€/mois)</label>
+        <input type="number" id="chargesVisite" placeholder="ex. 150">
       </div>
     </div>
 
-    <div class="field">
+    <div class="field" id="tfVisiteField">
       <label>Taxe foncière estimée (€/an)</label>
-      <input type="number" id="tfVisite" placeholder="ex. 1200" oninput="syncTF()">
+      <input type="number" id="tfVisite" placeholder="ex. 1200">
     </div>
 
   </div>
@@ -455,13 +455,14 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
   </div>
   <div class="section-body">
     <div class="field">
-      <label>Loyer mensuel (hors charges)</label>
+      <label id="loyerLabel">Loyer mensuel (hors charges)</label>
       <div class="field-row">
         <input type="number" id="loyer" value="900" >
         <span class="unit">€/mois</span>
       </div>
     </div>
-    <div class="field">
+    <div class="check-pill" id="ccToggle" style="width:100%;box-sizing:border-box;justify-content:center;margin-bottom:.85rem">☐ Charges comprises dans le loyer (CC)</div>
+    <div class="field" id="chargesLocField">
       <label>Provision sur charges locatives</label>
       <div class="field-row">
         <input type="number" id="chargesLoc" value="150" >
@@ -475,6 +476,23 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
         <span class="unit">€/mois</span>
       </div>
     </div>
+
+    <div class="seg-title">📦 Frais d'entrée (ponctuels, hors mensualités)</div>
+    <div class="field">
+      <label>Dépôt de garantie (caution)</label>
+      <div class="field-row">
+        <input type="number" id="depotGarantie" value="0" >
+        <span class="unit">€</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Frais d'agence (à charge locataire)</label>
+      <div class="field-row">
+        <input type="number" id="fraisAgenceLoc" value="0" >
+        <span class="unit">€</span>
+      </div>
+    </div>
+    <div class="info-chip">Dépôt de garantie généralement égal à 1 mois de loyer hors charges (logement vide) ou 2 mois (meublé). Les frais d'agence à la charge du locataire sont plafonnés par la loi ALUR selon la zone géographique. Ces montants sont ponctuels, versés à l'entrée dans le logement — ils ne s'ajoutent pas aux charges mensuelles.</div>
   </div>
 </div>
 
@@ -859,6 +877,30 @@ function setMode(m) {
   document.getElementById('sectionLoc').style.display    = m==='location' ? '' : 'none';
   document.getElementById('sectionCopro').style.display  = m==='achat'    ? '' : 'none';
   document.getElementById('fieldAssurHabAchat').style.display = m==='achat' ? '' : 'none';
+
+  // Adapter la fiche "Bien visité" à l'univers Achat ou Location
+  document.getElementById('prixVisiteLabel').textContent = m==='achat' ? 'Prix affiché (€)' : 'Loyer affiché (€/mois)';
+  document.getElementById('chargesVisiteLabel').textContent = m==='achat' ? 'Charges copro (€/mois)' : 'Charges locatives (€/mois)';
+  document.getElementById('prixBienVisite').placeholder = m==='achat' ? 'ex. 285000' : 'ex. 900';
+  document.getElementById('tfVisiteField').style.display = m==='achat' ? '' : 'none'; // taxe foncière : à la charge du propriétaire, non applicable en location
+
+  calc();
+}
+
+// ═══════════════════════════════════════════════
+//  Charges comprises (CC) — loyer location
+// ═══════════════════════════════════════════════
+function isChargesComprises() {
+  var el = document.getElementById('ccToggle');
+  return el ? el.classList.contains('checked') : false;
+}
+function toggleCC() {
+  var el = document.getElementById('ccToggle');
+  el.classList.toggle('checked');
+  var cc = isChargesComprises();
+  el.textContent = (cc ? '☑' : '☐') + ' Charges comprises dans le loyer (CC)';
+  document.getElementById('loyerLabel').textContent = cc ? 'Loyer mensuel (CC)' : 'Loyer mensuel (hors charges)';
+  document.getElementById('chargesLocField').style.display = cc ? 'none' : '';
   calc();
 }
 
@@ -901,13 +943,20 @@ function setTaux(v) {
 // ═══════════════════════════════════════════════
 function syncPrix() {
   var v = document.getElementById('prixBienVisite').value;
-  if (v) { document.getElementById('prixBien').value = v; calc(); }
+  if (v) {
+    document.getElementById(mode==='achat' ? 'prixBien' : 'loyer').value = v;
+    calc();
+  }
 }
 function syncCharges() {
   var v = document.getElementById('chargesVisite').value;
-  if (v) { document.getElementById('chargesCopro').value = v; calc(); }
+  if (v) {
+    document.getElementById(mode==='achat' ? 'chargesCopro' : 'chargesLoc').value = v;
+    calc();
+  }
 }
 function syncTF() {
+  if (mode !== 'achat') return; // non applicable en location — à la charge du propriétaire
   var v = document.getElementById('tfVisite').value;
   if (v) { document.getElementById('taxeFonciere').value = v; calc(); }
 }
@@ -1088,19 +1137,28 @@ function calc() {
 
   if (mode === 'location') {
     var loyer      = gv('loyer');
-    var chargesLoc = gv('chargesLoc');
+    var cc         = isChargesComprises();
+    var chargesLoc = cc ? 0 : gv('chargesLoc');
     var assurLoc   = gv('assurLoc');
+    var depot      = gv('depotGarantie');
+    var fraisAg    = gv('fraisAgenceLoc');
     totalLogement  = loyer + chargesLoc + assurLoc;
-    document.getElementById('badgeLoc').textContent = fmtM(loyer);
+    document.getElementById('badgeLoc').textContent = fmtM(loyer) + (cc ? ' (CC)' : '');
     var te = revTotal > 0 ? loyer/revTotal*100 : 0;
     synthRows = [
-      {l:'Loyer mensuel',        v:fmtM(loyer),        c:'red'},
-      {l:'Charges locatives',    v:fmtM(chargesLoc),   c:'red'},
-      {l:'Assurance habitation', v:fmtM(assurLoc),     c:'red'},
-      {l:'TOTAL logement/mois',  v:fmtM(totalLogement),c:'red', bold:true},
-      {sep:true},
-      {l:"Taux d'effort loyer",  v:Math.round(te)+'%', c:te>33?'red':'green'},
+      {l: cc ? 'Loyer mensuel (CC)' : 'Loyer mensuel (hors charges)', v:fmtM(loyer), c:'red'},
     ];
+    if (!cc) synthRows.push({l:'Charges locatives', v:fmtM(chargesLoc), c:'red'});
+    synthRows.push({l:'Assurance habitation', v:fmtM(assurLoc), c:'red'});
+    synthRows.push({l:'TOTAL logement/mois',  v:fmtM(totalLogement), c:'red', bold:true});
+    synthRows.push({sep:true});
+    synthRows.push({l:"Taux d'effort loyer",  v:Math.round(te)+'%', c:te>33?'red':'green'});
+    if (depot>0 || fraisAg>0) {
+      synthRows.push({sep:true});
+      if (depot>0)   synthRows.push({l:'Dépôt de garantie (ponctuel)', v:fmt(depot), c:'blue'});
+      if (fraisAg>0) synthRows.push({l:"Frais d'agence (ponctuel)",    v:fmt(fraisAg), c:'blue'});
+      synthRows.push({l:"Total frais d'entrée (une fois)", v:fmt(depot+fraisAg), c:'red'});
+    }
   }
 
   var reste       = revTotal - totalLogement - totalVie;
@@ -1138,7 +1196,8 @@ function calc() {
 
   // Comparaison
   var loyerR  = gv('loyer') || 900;
-  var cLocR   = gv('chargesLoc') || 150;
+  var ccR     = isChargesComprises();
+  var cLocR   = ccR ? 0 : (gv('chargesLoc') || 150);
   var aLocR   = gv('assurLoc') || 20;
   var totLoc  = loyerR + cLocR + aLocR;
   var prixR   = gv('prixBien') || 285000;
@@ -1157,7 +1216,7 @@ function calc() {
 
   var cmpHtml = '<table class="mini-table">';
   cmpHtml += '<tr><td style="font-weight:600">Scénario Location</td><td style="color:var(--blue);font-weight:600">'+fmtM(totLoc)+'</td></tr>';
-  cmpHtml += '<tr><td style="padding-left:.7rem;font-size:.78rem;color:var(--muted)">Loyer '+fmtM(loyerR)+' + charges '+fmtM(cLocR)+' + ass. '+fmtM(aLocR)+'</td><td></td></tr>';
+  cmpHtml += '<tr><td style="padding-left:.7rem;font-size:.78rem;color:var(--muted)">Loyer '+fmtM(loyerR)+(ccR?' (CC)':' + charges '+fmtM(cLocR))+' + ass. '+fmtM(aLocR)+'</td><td></td></tr>';
   cmpHtml += '<tr><td colspan="2" style="padding:.3rem"></td></tr>';
   cmpHtml += '<tr><td style="font-weight:600">Scénario Achat</td><td style="color:var(--blue);font-weight:600">'+fmtM(totAchat)+'</td></tr>';
   cmpHtml += '<tr><td style="padding-left:.7rem;font-size:.78rem;color:var(--muted)">Crédit '+fmtM(mR)+' + ass. '+fmtM(assR)+' + copro/TF '+fmtM(cR+tfR+aHR)+'</td><td></td></tr>';
@@ -1306,10 +1365,12 @@ function exportPDF() {
     ['Équipements', equip || '—'],
     ['Chauffage', chauffTxt],
     ['Eau chaude', eauTxt],
-    ['Prix affiché', getVal('prixBienVisite') ? euro(+getVal('prixBienVisite')) : '—'],
-    ['Charges copro', getVal('chargesVisite') ? getVal('chargesVisite')+' €/mois' : '—'],
-    ['Taxe foncière', getVal('tfVisite') ? getVal('tfVisite')+' €/an' : '—'],
+    [mode==='achat' ? 'Prix affiché' : 'Loyer affiché', getVal('prixBienVisite') ? (mode==='achat' ? euro(+getVal('prixBienVisite')) : euroM(+getVal('prixBienVisite'))) : '—'],
+    [mode==='achat' ? 'Charges copro' : 'Charges locatives', getVal('chargesVisite') ? getVal('chargesVisite')+' €/mois' : '—'],
   ];
+  if (mode === 'achat') {
+    bienRows.push(['Taxe foncière', getVal('tfVisite') ? getVal('tfVisite')+' €/an' : '—']);
+  }
   bienRows.forEach(function(r, idx){
     if (idx % 2 === 1) fillRect(margin, y-3.7, col, 5.2, [247,248,252]);
     txt(r[0], margin+3, y, 8.5, muted, false);
@@ -1388,11 +1449,11 @@ function exportPDF() {
     y = row("Taux d'effort crédit / revenus", Math.round(te)+' %', y, te>35?red:green);
     y = row('Intérêts totaux sur la durée', euro(mens*duree*12-cap), y, red);
   } else {
-    var loyer=gv('loyer'), cLoc=gv('chargesLoc'), aLoc=gv('assurLoc');
+    var loyer=gv('loyer'), ccPdf=isChargesComprises(), cLoc=ccPdf?0:gv('chargesLoc'), aLoc=gv('assurLoc');
     totLog=loyer+cLoc+aLoc;
     var te=revTot>0?loyer/revTot*100:0;
-    y = row('Loyer mensuel (hors charges)', euroM(loyer), y, red);
-    y = row('Charges locatives', euroM(cLoc), y, red);
+    y = row(ccPdf ? 'Loyer mensuel (CC)' : 'Loyer mensuel (hors charges)', euroM(loyer), y, red);
+    if (!ccPdf) y = row('Charges locatives', euroM(cLoc), y, red);
     y = row('Assurance habitation', euroM(aLoc), y, red);
     hLine(y-1.5); y += 1;
     fillRect(margin, y-3.8, col, 6.5, redLight);
@@ -1400,6 +1461,17 @@ function exportPDF() {
     txt(euroM(totLog), W-margin-3, y+0.7, 9.5, red, true, 'right');
     y += 9.5;
     y = row("Taux d'effort loyer / revenus", Math.round(te)+' %', y, te>33?red:green);
+
+    var depotPdf = gv('depotGarantie'), fraisAgPdf = gv('fraisAgenceLoc');
+    if (depotPdf>0 || fraisAgPdf>0) {
+      y += 3;
+      hLine(y-1.5); y += 1;
+      txt("Frais d'entrée (ponctuels, hors charges mensuelles)", margin+2, y, 8, muted, true);
+      y += 5.2;
+      if (depotPdf>0)   y = row('Dépôt de garantie (caution)', euro(depotPdf), y);
+      if (fraisAgPdf>0) y = row("Frais d'agence (à charge locataire)", euro(fraisAgPdf), y);
+      y = row("Total frais d'entrée", euro(depotPdf+fraisAgPdf), y, orange, {size:8.5});
+    }
   }
   y += 3;
 
@@ -1456,6 +1528,11 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnAchat').addEventListener('click', function(){ setMode('achat'); });
   document.getElementById('btnLoc').addEventListener('click',   function(){ setMode('location'); });
 
+  // Charges comprises (CC) toggle
+  var ccEl = document.getElementById('ccToggle');
+  ccEl.addEventListener('click', toggleCC);
+  ccEl.addEventListener('touchend', function(e){ e.preventDefault(); toggleCC(); }, {passive:false});
+
   // PDF button
   document.getElementById('btnPDF').addEventListener('click', exportPDF);
 
@@ -1472,8 +1549,8 @@ document.addEventListener('DOMContentLoaded', function() {
     h.addEventListener('click', function(){ toggleSection(h); });
   });
 
-  // Checkboxes pills (touch + click)
-  document.querySelectorAll('.check-pill').forEach(function(pill){
+  // Checkboxes pills (touch + click) — exclut #ccToggle qui a sa propre logique (toggleCC)
+  document.querySelectorAll('.check-pill:not(#ccToggle)').forEach(function(pill){
     pill.addEventListener('click', function(e){
       e.preventDefault();
       pill.classList.toggle('checked');
@@ -1511,7 +1588,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Inputs numériques
   ['revRetraite','revFamille','revCompagnon','revAutre',
    'prixBien','apport','fraisNotaire',
-   'loyer','chargesLoc','assurLoc',
+   'loyer','chargesLoc','assurLoc','depotGarantie','fraisAgenceLoc',
    'chargesCopro','taxeFonciere','assurHab',
    'mutuelle','energies','mobile','internet','assurVoiture','autresCharges'
   ].forEach(function(id){
